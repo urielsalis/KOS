@@ -53,7 +53,7 @@ install-grub-config: grub/grub.cfg
 	cp grub /tmp/mnt/disk_img/boot -r 
 verify-kernel:
 	grub-file --is-x86-multiboot build/kernel.bin
-install-kernel: kernel.bin verify-kernel mount-disk-img 
+install-kernel: kernel.bin mount-disk-img 
 	cp build/kernel.bin /tmp/mnt/disk_img/boot/ktkernel.bin \
 	&& sync
 .PHONY: vm-gdb vm prepare-disk-for-run umount umount-disk-img install-grub mount-disk-img format-disk-img losetup-disk-img lodel-disk-img part-disk-img create-disk-img install-grub-config verify-kernel install-kernel kernel/build/kernel.bin

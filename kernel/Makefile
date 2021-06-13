@@ -11,26 +11,29 @@ IMG_SOURCES = kotlin.dat font/font.dat
 OBJECTS = $(C_SOURCES:.c=.bc.o) $(ASM_SOURCES:.s=.s.o) $(KOTLIN_SOURCES:.kt=.kt.bc.o) $(IMG_SOURCES:.dat=.dat.o)
 OBJECTS_LOCATION = $(addprefix build/,${OBJECTS})
 
-LLC_FLAGS = -filetype=obj -march=x86-64 -code-model=kernel
-CLANG_FLAGS = -Isrc/c -g -c -emit-llvm 
+LLC_FLAGS = -filetype=obj -march=x86-64 -code-model=kernel --mtriple=x86_64-unknown-linux-gnu
+CLANG_FLAGS = --target=x86_64-unknown-linux-gnu -Isrc/c -g -c -emit-llvm 
 
-KONANC_FLAGS = -nolink
+KONANC_FLAGS = -p bitcode
 
-GCC_PREFIX = /usr/lib/gcc/x86_64-linux-gnu/4.8
-GCC_OBJ = crtbegin.o crtend.o libatomic.a libgcc.a libgcc_eh.a libstdc++.a 
+GCC_PREFIX = /usr/local/lib/gcc/x86_64-elf/11.1.0
+# GCC_OBJ = crtbegin.o crtend.o libatomic.a libgcc.a libgcc_eh.a libstdc++.a 
+GCC_OBJ = crtbegin.o crtend.o libgcc.a
+
 GCC_LIBS = $(addprefix ${GCC_PREFIX}/,${GCC_OBJ}) 
 
 LD_IGNORE_UNRESOLVED = --unresolved-symbols=ignore-all
-LD_FLAGS = -melf_x86_64 -g ${LD_IGNORE_UNRESOLVED} -T linker.ld --defsym=_Z19RuntimeAssertFailedPKcS0_=AssertionFailedPX -z max-page-size=0x1000
+LD_FLAGS = -melf_x86_64 -g ${LD_IGNORE_UNRESOLVED} -T linker.ld --defsym=_Z19RuntimeAssertFailedPKcS0_=AssertionFailedPX -z max-page-size=0x1000 -z muldefs 
 
 .PHONY: all clean
 all: kernel.bin
 
 clean: 
-	rm build -rf
+	rm -rf build
 # runtime.bc.o stdlib.kt.bc.o 
 kernel.bin: $(OBJECTS) 
-	ld -o build/kernel.bin runtime.bc.o stdlib.kt.bc.o ${GCC_LIBS} ${OBJECTS_LOCATION} $(LD_FLAGS)
+	x86_64-elf-ld -o build/kernel.bin runtime.bc.o stdlib.kt.bc.o build/main.kt.bc.o ${GCC_LIBS} ${OBJECTS_LOCATION} $(LD_FLAGS)
+#	x86_64-elf-ld -o build/kernel.bin runtime.bc.o ${GCC_LIBS} ${OBJECTS_LOCATION} $(LD_FLAGS)
 	
 
 %.bc: %.c
@@ -40,7 +43,7 @@ kernel.bin: $(OBJECTS)
 %.bc.o: %.bc
 	mkdir -p build/$(dir $@) && llc build/$< -o build/$@ $(LLC_FLAGS)
 %.s.o: %.s
-	as $< -o build/$@
+	x86_64-elf-as $< -o build/$@
 
 %.dat.o: %.dat
-	objcopy -B i386:x86-64 -I binary -O elf64-x86-64 $< build/$@
+	llvm-objcopy -B i386:x86-64 -I binary -O elf64-x86-64 $< build/$@

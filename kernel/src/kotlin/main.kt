@@ -1,4 +1,4 @@
-import konan.SymbolName
+import kotlin.native.SymbolName
 import kotlinx.cinterop.*
 
 
@@ -126,7 +126,7 @@ fun print(s: String, attr: Byte, pos: Int) {
 }
 
  
-class PAEEntry(override val rawPtr: NativePtr) : CStructVar() {
+class PAEEntry(rawPtr: NativePtr) : CStructVar(rawPtr) {
     
     companion object : Type(8 * 512, 1024)
     
@@ -147,7 +147,7 @@ class PAEEntry(override val rawPtr: NativePtr) : CStructVar() {
     }
 }
 
-class FontGlyphData(override val rawPtr: NativePtr) : CStructVar() {
+class FontGlyphData(rawPtr: NativePtr) : CStructVar(rawPtr) {
     
     companion object : Type(11, 0x1)
    
@@ -183,7 +183,6 @@ external fun initializeMemoryAllocation()
 @SymbolName("InitRuntime")
 external fun initRuntime(): NativePtr
 
-
 @SymbolName("abort")
 external fun abort()
 
@@ -203,7 +202,6 @@ external fun memset(ptr: Long, v: Int, size: Long): Long
 
 @SymbolName("memcpy")
 external fun memcpy(dst: Long, src: Long, size: Long): Long
-
 
 @SymbolName("prepare_font")
 external fun prepareFont()
